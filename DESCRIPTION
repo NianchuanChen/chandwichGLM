@@ -25,6 +25,5 @@ Suggests: knitr,
     testthat
 VignetteBuilder: knitr
 
-URL: https://github.com/NianchuanChen/chandwichGLM
 
-BugReports: github.com/NianchuanChen/chandwichGLM/issues
+
