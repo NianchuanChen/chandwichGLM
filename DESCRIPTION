@@ -1,0 +1,26 @@
+Package: chandwichGLM
+Title: Chandler-Bate Sandwich Loglikelihood Adjustment for Generalized Linear Models
+Version: 1.0.0.9000
+Date: 2018-07-4
+Authors@R: c(
+    person(c("Paul", "J."), "Northrop", email = "p.northrop@ucl.ac.uk", 
+      role = c("aut", "cre", "cph")),
+    person("Nianchuan", "Chen", role = c("aut", "cph"))
+    )
+Description: Performs inferences from Generalized Linear Models fitted to
+    cluster correlated data, using adjustment to the independence 
+    loglikelihood developed in Chandler and Bate (2007) 
+    <doi:10.1093/biomet/asm015>.  The adjustment are performed by the 
+    'chandwich' package <https://cran.r-project.org/package=chandwich>.
+Depends: R (>= 3.4.0)
+LazyData: true
+License: GPL (>= 2)
+RoxygenNote: 6.0.1
+Imports: chandwich,
+    graphics,
+    methods,
+    stats
+Suggests: knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
