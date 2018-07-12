@@ -104,7 +104,6 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # Add x = TRUE so that the returned object will contain the design matrix x
   glm_call$x <- TRUE
   # Call stats::glm with the user's arguments
-  res <- eval.parent(glm_call)
   glm_object <- eval.parent(glm_call)
   #
   # 2. Use chandwich::adjust_loglik() to adjust the log-likelihood
