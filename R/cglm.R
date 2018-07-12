@@ -109,7 +109,7 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # 2. Use chandwich::adjust_loglik() to adjust the log-likelihood
   #
   # Extract the name of the GLM family
-  glm_family <- res$family$family
+  glm_family <- glm_object$family$family
   # Set the independence log-likelihood to be adjusted
   loglik_for_chandwich <- switch(glm_family,
                                  poisson = pois_glm_loglik,
