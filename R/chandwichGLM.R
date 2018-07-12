@@ -20,4 +20,5 @@
 #' @docType package
 #' @name chandwichGLM
 #' @import methods
+#' @importFrom sandwich estfun
 NULL
