@@ -54,5 +54,13 @@ logLik.binglm<-function(object,...){
 
   w <- object$prior.weights
 
-  return(w * dbinom(x = y, lambda = mu, log = TRUE))
+  return(w * dbinom(x = y, size = m*y,  prob = mu, log = TRUE))
+}
+
+bin_glm_loglik <- function(pars, bin_object) {
+  new_object <- bin_object
+  class(new_object) <- "binglm"
+  # Create the linear predictor eta from the parameter values in pars
+  new_object$linear.predictor <- drop(new_object$x %*% pars)
+  return(logLik(new_object))
 }
