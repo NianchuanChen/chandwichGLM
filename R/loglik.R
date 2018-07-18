@@ -34,3 +34,25 @@ pois_glm_loglik <- function(pars, glm_object) {
   new_object$linear.predictor <- drop(new_object$x %*% pars)
   return(logLik(new_object))
 }
+
+logLik.binglm<-function(object,...){
+  if(object$family$family != "binomial") {
+  stop("logLik.binglm can only be used for objects in the Binomial family")
+}
+  if (nargs() > 1L) {
+    warning("extra arguments discarded")
+  }
+  off <-object$offset
+  if (is.null(off)) {
+    off <- 0
+  }
+  eta <- object$linear.predictor
+
+  mu <- object$family$linkinv(off + eta)
+
+  y <- object$y
+
+  w <- object$prior.weights
+
+  return(w * dbinom(x = y, lambda = mu, log = TRUE))
+}
