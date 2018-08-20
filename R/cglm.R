@@ -62,18 +62,19 @@
 #'   \code{\link[chandwich]{chandwich}},
 #'   \code{\link[chandwich]{adjust_loglik}}.
 #' @examples
+#' ### Poisson GLM
+#'
 #' ## Example from the help file for stats::glm()
 #' ## Dobson (1990) Page 93: Randomized Controlled Trial :
 #' counts <- c(18,17,15,20,10,20,25,13,12)
 #' outcome <- gl(3,1,9)
 #' treatment <- gl(3,3)
 #' d.AD <- data.frame(treatment, outcome, counts)
-
-#' glm.D93 <- glm(counts ~ outcome + treatment, family = poisson())
-#' cglm1 <- cglm(counts ~ outcome + treatment, family = poisson(),
-#'               cluster = 1:nrow(d.AD))
-#' cglm2 <- cglm(counts ~ outcome + treatment, family = poisson(),
-#'               cluster = 1:nrow(d.AD), use_alg = FALSE)
+#'
+#' glm.D93 <- glm(counts ~ outcome + treatment, family = poisson)
+#' cglm1 <- cglm(counts ~ outcome + treatment, family = poisson)
+#' cglm2 <- cglm(counts ~ outcome + treatment, family = poisson,
+#'               use_alg = FALSE)
 #' summary(glm.D93)
 #' summary(cglm1)
 #' summary(cglm2)
@@ -86,6 +87,25 @@
 #' # A confidence region for a pair of parameters
 #' conf <- chandwich::conf_region(cglm1, which_pars = 1:2)
 #' plot(conf, conf = c(50, 75, 95, 99))
+#'
+#' ### Binomial GLM
+#'
+#' # Response vector (0/1 numeric or, in this case, a yes/no factor)
+#' w <- glm(degree ~ religion + gender + age, data = carData::WVS,
+#'          family = binomial)
+#' wc <- cglm(degree ~ religion + gender + age, data = carData::WVS,
+#'            family = binomial)
+#' summary(w)
+#' summary(wc)
+#'
+#' # Response (two-column) matrix (number of successes, number of failures)
+#'
+#' # [Temporary example from the internet]
+#'
+#' cuse <- read.table("http://data.princeton.edu/wws509/datasets/cuse.dat",
+#'                    header=TRUE)
+#' lrfit <- glm(cbind(using, notUsing) ~ age + education + wantsMore,
+#'              family = binomial, data = cuse)
 #' @export
 cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
                  start = NULL, etastart, mustart, offset, control = list(...),
@@ -93,6 +113,24 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
                  contrasts = NULL, cluster = NULL, use_alg = TRUE, ...) {
   #
   # 1. Fit the model using stats::glm()
+  #
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset", "weights", "na.action",
+               "etastart", "mustart", "offset"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  ## need stats:: for non-standard evaluation
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+#  if(identical(method, "model.frame")) return(mf)
+
+  if (!is.character(method) && !is.function(method))
+    stop("invalid 'method' argument")
+  ## for back-compatibility in return result
+  if (identical(method, "glm.fit"))
+    control <- do.call("glm.control", control)
+  mt <- attr(mf, "terms") # allow model.frame to have updated it
+  response <- model.response(mf, "any") # e.g. factors are allowed
   #
   # Extract the arguments from the user's call, including any in ...
   glm_call <- match.call(expand.dots = TRUE)
@@ -104,7 +142,19 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # Add x = TRUE so that the returned object will contain the design matrix x
   glm_call$x <- TRUE
   # Call stats::glm with the user's arguments
+  res <- eval.parent(glm_call)
   glm_object <- eval.parent(glm_call)
+  #
+  # Special treatment for binomial GLMs when the input response is a
+  # two-column matrix of (number of successes, number of failures)
+  #
+  if (is.matrix(response)) {
+    glm_object$n_successes <- response[, 1]
+    glm_object$n_trials <- rowSums(response)
+  } else {
+    glm_object$n_successes <- glm_object$y
+    glm_object$n_trials <- 1
+  }
   #
   # 2. Use chandwich::adjust_loglik() to adjust the log-likelihood
   #
@@ -113,15 +163,18 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # Set the independence log-likelihood to be adjusted
   loglik_for_chandwich <- switch(glm_family,
                                  poisson = pois_glm_loglik,
+                                 binomial = binom_glm_loglik,
                                  NULL)
   if (use_alg) {
     # Set a function to evaluate the score matrix
     alg_deriv_for_chandwich <- switch(glm_family,
                                       poisson = no_dispersion_glm_alg_deriv,
+                                      binomial = no_dispersion_glm_alg_deriv,
                                       NULL)
     # Set a function to evaluate the Hessian matrix of the loglikelihood
     alg_hess_for_chandwich <- switch(glm_family,
                                      poisson = no_dispersion_glm_alg_hess,
+                                     binomial = no_dispersion_glm_alg_hess,
                                      NULL)
   } else {
     alg_deriv_for_chandwich <- NULL
