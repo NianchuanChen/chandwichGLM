@@ -62,6 +62,49 @@
 #'   \code{\link[chandwich]{chandwich}},
 #'   \code{\link[chandwich]{adjust_loglik}}.
 #' @examples
+#'
+#' ### Section 5.2 of sandwich vignette at
+#' # https://cran.r-project.org/web/packages/sandwich/vignettes/sandwich-OOP.pdf
+#'
+#' ## Load the dataset Affairs from the package AER
+#' data("Affairs", package = "AER")
+#'
+#' ## Fit Binomial regression model
+#' fm_probit <- glm(I(affairs > 0) ~ age + yearsmarried + religiousness +
+#'                  occupation + rating, data = Affairs,
+#'                  family = binomial(link = "probit"))
+#'
+#' # Fit the model using clgm(), adjusting the log-likelihood
+#' # The default cluster is used: adjusted SEs viewed as model-robust SEs
+#' c_probit <- cglm(I(affairs > 0) ~ age + yearsmarried + religiousness +
+#'                 occupation + rating, data = Affairs,
+#'                 family = binomial(link = "probit"))
+#'
+#' library(sandwich)
+#' ## Check that
+#' # (1) the unadjusted SEs are close to those from chandwichGLM
+#' # (2) the adjusted SEs from sandwich are close to those from chandwichGLM
+#' coeftest(fm_probit)
+#' coeftest(fm_probit, vcov = sandwich)
+#' summary(c_probit)
+#'
+#' ## Extra facilities provided by chandwich
+#'
+#' # Confidence intervals based on the adjusted log-likelihood
+#' cints <- chandwich::conf_intervals(c_probit)
+#' cints
+#' plot(cints, which_par = "occupation")
+#'
+#' # Confidence region for a pair of parameters (slow to run)
+#' conf <- chandwich::conf_region(c_probit, which_pars = 2:3)
+#' plot(conf, conf = c(50, 75, 95, 99))
+#'
+#' # Adjusted likelihood ratio test to compare nested models
+#' # The p-value is different from, but in this case very similar to,
+#' # the p-value from the Wald test from coeftest() above
+#' chandwich::compare_models(c_probit, fixed_pars = "occupation")
+#'
+#'
 #' ## Example from the help file for stats::glm()
 #' ## Dobson (1990) Page 93: Randomized Controlled Trial :
 #' counts <- c(18,17,15,20,10,20,25,13,12)
@@ -86,6 +129,7 @@
 #' # A confidence region for a pair of parameters
 #' conf <- chandwich::conf_region(cglm1, which_pars = 1:2)
 #' plot(conf, conf = c(50, 75, 95, 99))
+
 #' @export
 cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
                  start = NULL, etastart, mustart, offset, control = list(...),
@@ -93,6 +137,24 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
                  contrasts = NULL, cluster = NULL, use_alg = TRUE, ...) {
   #
   # 1. Fit the model using stats::glm()
+  #
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset", "weights", "na.action",
+               "etastart", "mustart", "offset"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  ## need stats:: for non-standard evaluation
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+#  if(identical(method, "model.frame")) return(mf)
+
+  if (!is.character(method) && !is.function(method))
+    stop("invalid 'method' argument")
+  ## for back-compatibility in return result
+  if (identical(method, "glm.fit"))
+    control <- do.call("glm.control", control)
+  mt <- attr(mf, "terms") # allow model.frame to have updated it
+  response <- model.response(mf, "any") # e.g. factors are allowed
   #
   # Extract the arguments from the user's call, including any in ...
   glm_call <- match.call(expand.dots = TRUE)
@@ -104,7 +166,19 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # Add x = TRUE so that the returned object will contain the design matrix x
   glm_call$x <- TRUE
   # Call stats::glm with the user's arguments
+  res <- eval.parent(glm_call)
   glm_object <- eval.parent(glm_call)
+  #
+  # Special treatment for binomial GLMs when the input response is a
+  # two-column matrix of (number of successes, number of failures)
+  #
+  if (is.matrix(response)) {
+    glm_object$n_successes <- response[, 1]
+    glm_object$n_trials <- rowSums(response)
+  } else {
+    glm_object$n_successes <- glm_object$y
+    glm_object$n_trials <- 1
+  }
   #
   # 2. Use chandwich::adjust_loglik() to adjust the log-likelihood
   #
@@ -113,15 +187,18 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # Set the independence log-likelihood to be adjusted
   loglik_for_chandwich <- switch(glm_family,
                                  poisson = pois_glm_loglik,
+                                 binomial = binom_glm_loglik,
                                  NULL)
   if (use_alg) {
     # Set a function to evaluate the score matrix
     alg_deriv_for_chandwich <- switch(glm_family,
                                       poisson = no_dispersion_glm_alg_deriv,
+                                      binomial = no_dispersion_glm_alg_deriv,
                                       NULL)
     # Set a function to evaluate the Hessian matrix of the loglikelihood
     alg_hess_for_chandwich <- switch(glm_family,
                                      poisson = no_dispersion_glm_alg_hess,
+                                     binomial = no_dispersion_glm_alg_hess,
                                      NULL)
   } else {
     alg_deriv_for_chandwich <- NULL
