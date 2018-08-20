@@ -129,7 +129,7 @@
 #' # A confidence region for a pair of parameters
 #' conf <- chandwich::conf_region(cglm1, which_pars = 1:2)
 #' plot(conf, conf = c(50, 75, 95, 99))
-
+#'
 #' @export
 cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
                  start = NULL, etastart, mustart, offset, control = list(...),
@@ -210,6 +210,7 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   res <- chandwich::adjust_loglik(loglik = loglik_for_chandwich,
                                   glm_object = glm_object,
                                   cluster = cluster,
+                                  init = glm_object$coefficients,
                                   p = length(glm_object$coefficients),
                                   par_names = names(glm_object$coefficients),
                                   alg_deriv = alg_deriv_for_chandwich,
