@@ -24,7 +24,8 @@ Imports: chandwich,
 Suggests: knitr,
     lmtest,
     rmarkdown,
-    testthat
+    testthat,
+    AER
 VignetteBuilder: knitr
 URL: http://github.com/NianchuanChen/chandwichGLM
 BugReports: http://github.com/NianchuanChen/chandwichGLM/issues
