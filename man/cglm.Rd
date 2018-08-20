@@ -161,17 +161,60 @@ Three adjustments to the independence loglikelihood described in
   clear account of this general area.
 }
 \examples{
+### Section 5.2 of sandwich vignette at
+# https://cran.r-project.org/web/packages/sandwich/vignettes/sandwich-OOP.pdf
+
+## Load the dataset Affairs from the package AER
+data("Affairs", package = "AER")
+
+## Fit Binomial regression model
+fm_probit <- glm(I(affairs > 0) ~ age + yearsmarried + religiousness +
+                 occupation + rating, data = Affairs,
+                 family = binomial(link = "probit"))
+
+# Fit the model using clgm(), adjusting the log-likelihood
+# The default cluster is used: adjusted SEs viewed as model-robust SEs
+c_probit <- cglm(I(affairs > 0) ~ age + yearsmarried + religiousness +
+                occupation + rating, data = Affairs,
+                family = binomial(link = "probit"))
+
+library(sandwich)
+## Check that
+# (1) the unadjusted SEs are close to those from chandwichGLM
+# (2) the adjusted SEs from sandwich are close to those from chandwichGLM
+coeftest(fm_probit)
+coeftest(fm_probit, vcov = sandwich)
+summary(c_probit)
+
+## Extra facilities provided by chandwich
+
+# Confidence intervals based on the adjusted log-likelihood
+cints <- chandwich::conf_intervals(c_probit)
+cints
+plot(cints, which_par = "occupation")
+
+# Confidence region for a pair of parameters (slow to run)
+conf <- chandwich::conf_region(c_probit, which_pars = 2:3)
+plot(conf, conf = c(50, 75, 95, 99))
+
+# Adjusted likelihood ratio test to compare nested models
+# The p-value is different from, but in this case very similar to,
+# the p-value from the Wald test from coeftest() above
+chandwich::compare_models(c_probit, fixed_pars = "occupation")
+
+### Poisson GLM
+
 ## Example from the help file for stats::glm()
 ## Dobson (1990) Page 93: Randomized Controlled Trial :
 counts <- c(18,17,15,20,10,20,25,13,12)
 outcome <- gl(3,1,9)
 treatment <- gl(3,3)
 d.AD <- data.frame(treatment, outcome, counts)
-glm.D93 <- glm(counts ~ outcome + treatment, family = poisson())
-cglm1 <- cglm(counts ~ outcome + treatment, family = poisson(),
-              cluster = 1:nrow(d.AD))
-cglm2 <- cglm(counts ~ outcome + treatment, family = poisson(),
-              cluster = 1:nrow(d.AD), use_alg = FALSE)
+
+glm.D93 <- glm(counts ~ outcome + treatment, family = poisson)
+cglm1 <- cglm(counts ~ outcome + treatment, family = poisson)
+cglm2 <- cglm(counts ~ outcome + treatment, family = poisson,
+              use_alg = FALSE)
 summary(glm.D93)
 summary(cglm1)
 summary(cglm2)
@@ -184,6 +227,25 @@ plot(cints, which_par = 2)
 # A confidence region for a pair of parameters
 conf <- chandwich::conf_region(cglm1, which_pars = 1:2)
 plot(conf, conf = c(50, 75, 95, 99))
+
+### Binomial GLM
+
+# Response vector (0/1 numeric or, in this case, a yes/no factor)
+w <- glm(degree ~ religion + gender + age, data = carData::WVS,
+         family = binomial)
+wc <- cglm(degree ~ religion + gender + age, data = carData::WVS,
+           family = binomial)
+summary(w)
+summary(wc)
+
+# Response (two-column) matrix (number of successes, number of failures)
+
+# [Temporary example from the internet]
+
+cuse <- read.table("http://data.princeton.edu/wws509/datasets/cuse.dat",
+                   header=TRUE)
+lrfit <- glm(cbind(using, notUsing) ~ age + education + wantsMore,
+             family = binomial, data = cuse)
 }
 \references{
 Chandler, R. E. and Bate, S. (2007). Inference for clustered

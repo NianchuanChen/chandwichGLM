@@ -62,7 +62,6 @@
 #'   \code{\link[chandwich]{chandwich}},
 #'   \code{\link[chandwich]{adjust_loglik}}.
 #' @examples
-#'
 #' ### Section 5.2 of sandwich vignette at
 #' # https://cran.r-project.org/web/packages/sandwich/vignettes/sandwich-OOP.pdf
 #'
@@ -104,6 +103,7 @@
 #' # the p-value from the Wald test from coeftest() above
 #' chandwich::compare_models(c_probit, fixed_pars = "occupation")
 #'
+#' ### Poisson GLM
 #'
 #' ## Example from the help file for stats::glm()
 #' ## Dobson (1990) Page 93: Randomized Controlled Trial :
@@ -111,12 +111,11 @@
 #' outcome <- gl(3,1,9)
 #' treatment <- gl(3,3)
 #' d.AD <- data.frame(treatment, outcome, counts)
-
-#' glm.D93 <- glm(counts ~ outcome + treatment, family = poisson())
-#' cglm1 <- cglm(counts ~ outcome + treatment, family = poisson(),
-#'               cluster = 1:nrow(d.AD))
-#' cglm2 <- cglm(counts ~ outcome + treatment, family = poisson(),
-#'               cluster = 1:nrow(d.AD), use_alg = FALSE)
+#'
+#' glm.D93 <- glm(counts ~ outcome + treatment, family = poisson)
+#' cglm1 <- cglm(counts ~ outcome + treatment, family = poisson)
+#' cglm2 <- cglm(counts ~ outcome + treatment, family = poisson,
+#'               use_alg = FALSE)
 #' summary(glm.D93)
 #' summary(cglm1)
 #' summary(cglm2)
@@ -130,6 +129,24 @@
 #' conf <- chandwich::conf_region(cglm1, which_pars = 1:2)
 #' plot(conf, conf = c(50, 75, 95, 99))
 #'
+#' ### Binomial GLM
+#'
+#' # Response vector (0/1 numeric or, in this case, a yes/no factor)
+#' w <- glm(degree ~ religion + gender + age, data = carData::WVS,
+#'          family = binomial)
+#' wc <- cglm(degree ~ religion + gender + age, data = carData::WVS,
+#'            family = binomial)
+#' summary(w)
+#' summary(wc)
+#'
+#' # Response (two-column) matrix (number of successes, number of failures)
+#'
+#' # [Temporary example from the internet]
+#'
+#' cuse <- read.table("http://data.princeton.edu/wws509/datasets/cuse.dat",
+#'                    header=TRUE)
+#' lrfit <- glm(cbind(using, notUsing) ~ age + education + wantsMore,
+#'              family = binomial, data = cuse)
 #' @export
 cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
                  start = NULL, etastart, mustart, offset, control = list(...),
@@ -146,7 +163,7 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   ## need stats:: for non-standard evaluation
   mf[[1L]] <- quote(stats::model.frame)
   mf <- eval(mf, parent.frame())
-#  if(identical(method, "model.frame")) return(mf)
+  #  if(identical(method, "model.frame")) return(mf)
 
   if (!is.character(method) && !is.function(method))
     stop("invalid 'method' argument")

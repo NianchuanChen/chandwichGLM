@@ -1,24 +1,75 @@
-#' chandwichGLM: Chandler-Bate Sandwich Loglikelihood Adjustment for Generalized
-#' Linear Models
-#'
-#' Performs inferences from Generalized Linear Models fitted to cluster
-#' correlated data, using adjustment to the independence loglikelihood
-#' developed in
-#' \href{http://dx.doi.org/10.1093/biomet/asm015}{Chandler and Bate (2007)}.
-#' The adjustment are performed by the
-#' \code{\link[chandwich]{chandwich}}.
-#'
-#' @details
-#' Add details.
-#'
-#' See Chandler and Bate (2007) for full details and
-#' \code{vignette("chandwichGLM-vignette", package = "chandwich")} for an
-#' overview of the package.
-#' @references Chandler, R. E. and Bate, S. (2007). Inference for clustered
-#'   data using the independence loglikelihood. \emph{Biometrika},
-#'   \strong{94}(1), 167-183. \url{http://dx.doi.org/10.1093/biomet/asm015}
-#' @docType package
-#' @name chandwichGLM
-#' @import methods
-#' @importFrom sandwich estfun
-NULL
+# We want to calculate the vector of contributions to the GLM log-likelihood,
+# from individual observations, at a given set of parameter values, including
+# the dispersion parameter (if any).
+
+# Poisson
+
+#' @export
+logLik.poisglm <- function(object, ...) {
+  if (object$family$family != "poisson") {
+    stop("logLik.poisglm can only be used for objects in the Poisson family")
+  }
+  if (nargs() > 1L) {
+    warning("extra arguments discarded")
+  }
+  # offset
+  off <- object$offset
+  if (is.null(off)) {
+    off <- 0
+  }
+  # linear predictor
+  eta <- object$linear.predictors
+  # Poisson mean.
+  mu <- object$family$linkinv(off + eta)
+  # responses
+  y <- object$y
+  # weights supplied to call to glm()
+  w <- object$prior.weights
+  # return weighted loglikelihood contributions
+  return(w * dpois(x = y, lambda = mu, log = TRUE))
+}
+
+pois_glm_loglik <- function(pars, glm_object) {
+  new_object <- glm_object
+  class(new_object) <- "poisglm"
+  # Create the linear predictor eta from the parameter values in pars
+  new_object$linear.predictors <- drop(new_object$x %*% pars)
+  return(logLik(new_object))
+}
+
+# Binomial
+
+#' @export
+logLik.binomglm <- function(object, ...) {
+  if (object$family$family != "binomial") {
+    stop("logLik.poisglm can only be used for objects in the Poisson family")
+  }
+  if (nargs() > 1L) {
+    warning("extra arguments discarded")
+  }
+  # offset
+  off <- object$offset
+  if (is.null(off)) {
+    off <- 0
+  }
+  # linear predictor
+  eta <- object$linear.predictors
+  # Poisson mean.
+  mu <- object$family$linkinv(off + eta)
+  # responses (number of successes)
+  n_successes <- object$n_successes
+  # number of trials
+  size <- object$n_trials
+  # weights supplied to call to glm()
+  w <- object$prior.weights
+  # return weighted loglikelihood contributions
+  return(w * dbinom(x = n_successes, size = size, prob = mu, log = TRUE))
+}
+
+binom_glm_loglik <- function(pars, glm_object) {
+  new_object <- glm_object
+  class(new_object) <- "binomglm"
+  # Create the linear predictor eta from the parameter values in pars
+  new_object$linear.predictors <- drop(new_object$x %*% pars)
+  return(logLik(new_object))
+}
