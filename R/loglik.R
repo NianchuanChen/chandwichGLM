@@ -68,6 +68,7 @@ logLik.binomglm <- function(object, ...) {
   return(w * stats::dbinom(x = n_successes, size = size, prob = mu, log = TRUE))
 }
 
+
 #' @export
 binom_glm_loglik <- function(pars, glm_object) {
   new_object <- glm_object
