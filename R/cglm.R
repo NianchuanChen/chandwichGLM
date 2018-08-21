@@ -81,6 +81,7 @@
 #'                 family = binomial(link = "probit"))
 #'
 #' library(sandwich)
+#' library(lmtest)
 #' ## Check that
 #' # (1) the unadjusted SEs are close to those from chandwichGLM
 #' # (2) the adjusted SEs from sandwich are close to those from chandwichGLM
