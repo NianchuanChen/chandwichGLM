@@ -156,28 +156,6 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   #
   # 1. Fit the model using stats::glm()
   #
-  mf <- match.call(expand.dots = FALSE)
-  m <- match(c("formula", "data", "subset", "weights", "na.action",
-               "etastart", "mustart", "offset"), names(mf), 0L)
-  mf <- mf[c(1L, m)]
-  mf$drop.unused.levels <- TRUE
-  ## need stats:: for non-standard evaluation
-  mf[[1L]] <- quote(stats::model.frame)
-  mf <- eval(mf, parent.frame())
-
-  #  if(identical(method, "model.frame")) return(mf)
-
-#  if(identical(method, "model.frame")) return(mf)
-
-
-  if (!is.character(method) && !is.function(method))
-    stop("invalid 'method' argument")
-  ## for back-compatibility in return result
-  if (identical(method, "glm.fit"))
-    control <- do.call("glm.control", control)
-  mt <- attr(mf, "terms") # allow model.frame to have updated it
-  response <- model.response(mf, "any") # e.g. factors are allowed
-  #
   # Extract the arguments from the user's call, including any in ...
   glm_call <- match.call(expand.dots = TRUE)
   # Change the first component (the function to call) to stats::glm()
