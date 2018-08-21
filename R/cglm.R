@@ -61,8 +61,7 @@
 #'   \code{\link[stats]{glm}},
 #'   \code{\link[chandwich]{chandwich}},
 #'   \code{\link[chandwich]{adjust_loglik}}.
-#' @examples
-<<<<<<< HEAD
+#' @exampless
 #'
 #' ### Section 5.2 of sandwich vignette at
 #' # https://cran.r-project.org/web/packages/sandwich/vignettes/sandwich-OOP.pdf
@@ -105,8 +104,6 @@
 #' # the p-value from the Wald test from coeftest() above
 #' chandwich::compare_models(c_probit, fixed_pars = "occupation")
 #'
-=======
->>>>>>> ce733117f0a24988a10a6bd03274f6d2ace7de29
 #' ### Poisson GLM
 #'
 #' ## Example from the help file for stats::glm()
@@ -167,11 +164,11 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   ## need stats:: for non-standard evaluation
   mf[[1L]] <- quote(stats::model.frame)
   mf <- eval(mf, parent.frame())
-<<<<<<< HEAD
+
   #  if(identical(method, "model.frame")) return(mf)
-=======
+
 #  if(identical(method, "model.frame")) return(mf)
->>>>>>> ce733117f0a24988a10a6bd03274f6d2ace7de29
+
 
   if (!is.character(method) && !is.function(method))
     stop("invalid 'method' argument")
