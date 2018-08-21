@@ -62,6 +62,7 @@
 #'   \code{\link[chandwich]{chandwich}},
 #'   \code{\link[chandwich]{adjust_loglik}}.
 #' @examples
+#'
 #' ### Section 5.2 of sandwich vignette at
 #' # https://cran.r-project.org/web/packages/sandwich/vignettes/sandwich-OOP.pdf
 #'

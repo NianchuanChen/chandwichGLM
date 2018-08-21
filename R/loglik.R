@@ -29,6 +29,7 @@ logLik.poisglm <- function(object, ...) {
   return(w * stats::dpois(x = y, lambda = mu, log = TRUE))
 }
 
+#' @export
 pois_glm_loglik <- function(pars, glm_object) {
   new_object <- glm_object
   class(new_object) <- "poisglm"
@@ -38,6 +39,7 @@ pois_glm_loglik <- function(pars, glm_object) {
 }
 
 # Binomial
+
 
 #' @export
 logLik.binomglm <- function(object, ...) {
@@ -66,6 +68,7 @@ logLik.binomglm <- function(object, ...) {
   return(w * stats::dbinom(x = n_successes, size = size, prob = mu, log = TRUE))
 }
 
+#' @export
 binom_glm_loglik <- function(pars, glm_object) {
   new_object <- glm_object
   class(new_object) <- "binomglm"
