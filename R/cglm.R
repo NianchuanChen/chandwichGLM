@@ -61,7 +61,7 @@
 #'   \code{\link[stats]{glm}},
 #'   \code{\link[chandwich]{chandwich}},
 #'   \code{\link[chandwich]{adjust_loglik}}.
-#' @exampless
+#' @examples
 #'
 #' ### Section 5.2 of sandwich vignette at
 #' # https://cran.r-project.org/web/packages/sandwich/vignettes/sandwich-OOP.pdf
@@ -142,8 +142,6 @@
 #' summary(wc)
 #'
 #' # Response (two-column) matrix (number of successes, number of failures)
-#'
-#' # [Temporary example from the internet]
 #'
 #' cuse <- read.table("http://data.princeton.edu/wws509/datasets/cuse.dat",
 #'                    header=TRUE)
