@@ -167,7 +167,8 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   # Call stats::glm with the user's arguments
   res <- eval.parent(glm_call)
   glm_object <- eval.parent(glm_call)
-  #
+  # Extract the response object
+  response <- stats::model.response(glm_call, "any")
   # Special treatment for binomial GLMs when the input response is a
   # two-column matrix of (number of successes, number of failures)
   #
