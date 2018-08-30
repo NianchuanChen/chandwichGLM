@@ -137,7 +137,8 @@
 #' w <- glm(degree ~ religion + gender + age, data = carData::WVS,
 #'          family = binomial)
 #' wc <- cglm(degree ~ religion + gender + age, data = carData::WVS,
-#'            family = binomial)
+#' family = binomial, cluster = carData::WVS$country)
+#'
 #' summary(w)
 #' summary(wc)
 #'
