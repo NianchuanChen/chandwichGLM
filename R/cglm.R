@@ -168,7 +168,14 @@ cglm <- function(formula, family = gaussian, data, weights, subset, na.action,
   res <- eval.parent(glm_call)
   glm_object <- eval.parent(glm_call)
   # Extract the response object
-  response <- stats::model.response(glm_call, "any")
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset", "weights", "na.action",
+               "etastart", "mustart", "offset"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+  response <- stats::model.response(mf, "any")
   # Special treatment for binomial GLMs when the input response is a
   # two-column matrix of (number of successes, number of failures)
   #
